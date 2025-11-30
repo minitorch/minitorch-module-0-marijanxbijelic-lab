@@ -24,6 +24,9 @@ class Module:
         self._parameters = {}
         self.training = True
 
+    def requires_grad_(self, flg: bool) -> None:
+        self.training = flg
+
     def modules(self) -> Sequence[Module]:
         """Return the direct child modules of this module."""
         m: Dict[str, Module] = self.__dict__["_modules"]
@@ -32,12 +35,16 @@ class Module:
     def train(self) -> None:
         """Set the mode of this module and all descendent modules to `train`."""
         # TODO: Implement for Task 0.4.
-        raise NotImplementedError("Need to implement for Task 0.4")
+        self.requires_grad_(True)
+        for module in self._modules.values():
+            module.requires_grad_(True)
 
     def eval(self) -> None:
         """Set the mode of this module and all descendent modules to `eval`."""
         # TODO: Implement for Task 0.4.
-        raise NotImplementedError("Need to implement for Task 0.4")
+        self.requires_grad_(False)
+        for module in self._modules.values():
+            module.requires_grad_(False)
 
     def named_parameters(self) -> Sequence[Tuple[str, Parameter]]:
         """Collect all the parameters of this module and its descendents.
@@ -48,12 +55,28 @@ class Module:
 
         """
         # TODO: Implement for Task 0.4.
-        raise NotImplementedError("Need to implement for Task 0.4")
+        named_parameters = []
+        named_parameters.extend(list(self._parameters.items()))
+
+        for module_name, module in self.__dict__.get("_modules", {}).items():
+            if len(module.modules()) == 0:
+                inside_named_parameters = list(module._parameters.items())
+            else:
+                inside_named_parameters = module.named_parameters()
+            inside_named_parameters = [
+                (f"{module_name}.{name}", parameter)
+                for name, parameter in inside_named_parameters
+            ]
+            named_parameters.extend(inside_named_parameters)
+
+        return named_parameters
 
     def parameters(self) -> Sequence[Parameter]:
         """Enumerate over all the parameters of this module and its descendents."""
         # TODO: Implement for Task 0.4.
-        raise NotImplementedError("Need to implement for Task 0.4")
+        named_parameters = self.named_parameters()
+        parameters = [parameter for name, parameter in named_parameters]
+        return parameters
 
     def add_parameter(self, k: str, v: Any) -> Parameter:
         """Manually add a parameter. Useful helper for scalar parameters.
